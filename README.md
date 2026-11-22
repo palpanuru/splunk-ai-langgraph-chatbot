@@ -1,6 +1,6 @@
 # Splunk AI Chatbot — Java 21 + Spring Boot
 
-Single-process Java application: HTML/JavaScript chat UI, REST API, Splunk search and AI log analysis. **No Python, FastAPI or LangGraph runtime.**
+Single-process Java application using **LangGraph4j 1.9.10**: HTML/JavaScript chat UI, REST API, Splunk search and AI log analysis.\n\n## LangGraph4j workflow\n\n`START → validate → search_logs → analyze → report → END`\n\n`LogAnalysisState.java` holds graph state. `LogAnalysisGraph.java` defines nodes, edges and invokes the compiled graph. `ChatService.java` implements the LLM analysis node. `ChatController.java` invokes the graph. This is an actual LangGraph4j workflow, not the Python LangGraph runtime.\n **No Python, FastAPI or LangGraph runtime.**
 
 ## Start locally
 
