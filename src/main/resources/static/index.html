@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Splunk AI Chatbot</title>
+<style>
+*{box-sizing:border-box}body{font:16px system-ui;background:#0b1220;color:#e8eef7;margin:0;padding:24px}
+main{max-width:850px;margin:auto;background:#172238;padding:24px;border-radius:14px}
+h1{margin-top:0}.controls,form{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+input,select,button{padding:12px;border-radius:8px;border:1px solid #5a6a84;font:inherit}
+input,select{background:#101b2e;color:white}#search,#message{flex:1;min-width:200px}
+button{background:#2563eb;color:white;cursor:pointer}button:disabled{opacity:.5}
+#messages{height:380px;overflow:auto;background:#0b1220;padding:16px;border-radius:10px;margin:18px 0}
+.msg{white-space:pre-wrap;padding:12px;border-radius:10px;margin:10px 0;background:#2a3952}
+.user{background:#1d4b91;margin-left:15%}.hint{color:#b5c4da}
+</style>
+</head>
+<body><main>
+<h1>Splunk AI Chatbot</h1>
+<p class="hint">Spring Boot only · Searches all indexes available to the Splunk token · No service filter</p>
+<div class="controls"><label for="search">Log text</label><input id="search" maxlength="120" placeholder="Optional: timeout">
+<label for="minutes">Last</label><select id="minutes"><option>15</option><option selected>30</option><option>60</option></select><span>minutes</span></div>
+<section id="messages" aria-live="polite"><div class="msg">Ask about recent log failures. Search text is optional.</div></section>
+<form id="form"><input id="message" required maxlength="1000" placeholder="What caused the failures?">
+<button id="send">Send</button></form>
+<script>
+const form=document.getElementById('form'),messages=document.getElementById('messages'),send=document.getElementById('send'),input=document.getElementById('message');
+function bubble(text,cls=''){const el=document.createElement('div');el.className='msg '+cls;el.textContent=text;messages.append(el);messages.scrollTop=messages.scrollHeight;return el;}
+form.addEventListener('submit',async event=>{
+ event.preventDefault();const message=input.value.trim();if(!message)return;
+ bubble(message,'user');input.value='';send.disabled=true;const output=bubble('Searching logs...');
+ try{
+  const response=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({message,searchText:document.getElementById('search').value.trim(),minutes:Number(document.getElementById('minutes').value)})});
+  const data=await response.json();
+  output.textContent=response.ok?data.answer+'\n\nEvents: '+data.eventCount:(data.error||'Request failed');
+ }catch(e){output.textContent='Unable to reach Spring Boot chatbot.';}
+ finally{send.disabled=false;input.focus();}
+});
+</script>
+</main></body></html>
