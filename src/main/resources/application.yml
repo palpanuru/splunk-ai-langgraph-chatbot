@@ -1,0 +1,7 @@
+server:
+  port: 8080
+splunk:
+  url: ${SPLUNK_URL:https://localhost:8089}
+  token: ${SPLUNK_TOKEN:}
+  index: ${SPLUNK_INDEX:*}
+  mock: ${SPLUNK_MOCK:true}
