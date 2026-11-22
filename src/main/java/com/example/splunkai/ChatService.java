@@ -13,16 +13,14 @@ import java.util.Map;
 
 @Service
 public class ChatService {
-    private final SplunkService splunk;
     private final ObjectMapper mapper;
     private final RestClient openAi;
     private final String apiKey;
     private final String model;
 
-    public ChatService(SplunkService splunk, ObjectMapper mapper,
+    public ChatService(ObjectMapper mapper,
                        @Value("${openai.api-key:}") String apiKey,
                        @Value("${openai.model:gpt-4.1-mini}") String model) {
-        this.splunk = splunk;
         this.mapper = mapper;
         this.apiKey = apiKey;
         this.model = model;
@@ -35,13 +33,10 @@ public class ChatService {
             .build();
     }
 
-    public ChatController.ChatResponse answer(String question, String query, int minutes) {
+    public String analyzeLogs(String question, String raw, int count) {
         try {
-            // Fixed, bounded search followed by evidence-based analysis: all in Java.
-            String raw = splunk.searchLogs(query, minutes);
             JsonNode logs = mapper.readTree(raw);
             if (!logs.isArray()) throw new IllegalStateException("Invalid Splunk result");
-            int count = logs.size();
             if (apiKey.isBlank()) {
                 StringBuilder summary = new StringBuilder("Mock AI mode. Found " + count
                     + " log events.\n\n");
@@ -52,7 +47,7 @@ public class ChatService {
                 }
                 summary.append("\nThese observations do not prove a root cause. "
                     + "Set OPENAI_API_KEY for model-based analysis.");
-                return new ChatController.ChatResponse(summary.toString(), count);
+                return summary.toString();
             }
 
             String logText = raw.substring(0, Math.min(raw.length(), 24000));
@@ -76,7 +71,7 @@ public class ChatService {
             String answer = response.path("choices").path(0)
                 .path("message").path("content").asText("");
             if (answer.isBlank()) throw new IllegalStateException("Empty AI response");
-            return new ChatController.ChatResponse(answer, count);
+            return answer;
         } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
             throw new IllegalStateException("Unable to parse Splunk logs", e);
         }
