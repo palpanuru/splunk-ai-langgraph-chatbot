@@ -1,30 +1,41 @@
-# Splunk AI Search Chatbot
+# Splunk AI Chatbot — Java 21 + Spring Boot
 
-Java 21 Spring Boot Splunk REST proxy + Python FastAPI/LangGraph + browser chatbot.
-Searches all indexes visible to the configured Splunk token by default (`SPLUNK_INDEX=*`). No service restriction.
+Single-process Java application: HTML/JavaScript chat UI, REST API, Splunk search and AI log analysis. **No Python, FastAPI or LangGraph runtime.**
 
-## Run locally
+## Start locally
 
 ```bash
 cp .env.example .env
-docker compose up --build
+docker compose up --build -d
 ```
 
-Open http://localhost:8000. Default `SPLUNK_MOCK=true` and `MOCK_AI=true` run without credentials. To connect Splunk, configure `SPLUNK_MOCK=false`, `SPLUNK_URL`, `SPLUNK_TOKEN`. To enable AI, set `MOCK_AI=false` and `OPENAI_API_KEY`.
+Or run `mvn spring-boot:run` in IntelliJ / terminal with Java 21.
 
-## Swagger UI (Spring Boot)
+- **Chatbot UI:** http://localhost:8080/
+- **Spring Boot Swagger:** http://localhost:8080/swagger-ui/index.html
+- **OpenAPI JSON:** http://localhost:8080/v3/api-docs
+- **Log search:** GET http://localhost:8080/api/logs?q=timeout&minutes=30
+- **Chat API:** POST http://localhost:8080/api/chat
 
-After starting the services, open http://localhost:8080/swagger-ui/index.html (not port 8000). The OpenAPI JSON is at http://localhost:8080/v3/api-docs.
-
-If upgrading an existing Docker deployment, run `docker compose up --build -d` so the Springdoc dependency is included. The Python FastAPI API docs are at http://localhost:8000/docs.
-
-## APIs
+Example:
 
 ```bash
-curl -G 'http://localhost:8080/api/logs' --data-urlencode 'q=timeout' --data-urlencode 'minutes=30'
-curl -X POST http://localhost:8000/api/chat -H 'Content-Type: application/json' -d '{"message":"What errors are present?","search_text":"timeout","minutes":30}'
+curl -X POST http://localhost:8080/api/chat -H "Content-Type: application/json" -d '{"message":"What caused the failures?","searchText":"timeout","minutes":30}'
 ```
 
-Search text is optional and treated as a literal, not arbitrary SPL. Search windows are 1–60 minutes, with at most 50 returned events. Logs are analyzed by a LangGraph search → analyze workflow.
+## Configure Splunk and AI
 
-**Security:** Local development prototype only. No user authentication or tenant isolation. Use a dedicated read-only least-privilege Splunk token. Redaction is illustrative, not comprehensive. Do not expose the application publicly without additional security controls.
+```dotenv
+SPLUNK_MOCK=false
+SPLUNK_URL=https://splunk.example.com:8089
+SPLUNK_TOKEN=your-read-only-token
+SPLUNK_INDEX=*
+OPENAI_API_KEY=your-api-key
+OPENAI_MODEL=gpt-4.1-mini
+```
+
+By default, `SPLUNK_MOCK=true` returns sample events. Without an OpenAI key, the Java chatbot returns a simple event summary. It does **not** perform model-based root-cause analysis in this mode.
+
+The search text is optional and treated as a literal, not executable SPL. Search windows are 1–60 minutes, and at most 50 events are returned. `SPLUNK_INDEX=*` searches indexes accessible to the Splunk token; no service name is required.
+
+**Security note:** Local development example, not production hardened. Add authentication/authorization, audit logging, comprehensive redaction and rate limits before exposing it. Never commit `.env` or credentials. The repo is currently public.
