@@ -6,12 +6,13 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class ChatServiceTest {
     @Test
-    void mockChatReturnsLogEvidence() {
+    void graphSearchesAndSummarizesMockLogs() throws Exception {
         ObjectMapper mapper = new ObjectMapper();
         SplunkService splunk = new SplunkService(
             "https://example.com:8089", "", "*", true, mapper);
-        ChatService service = new ChatService(splunk, mapper, "", "gpt-4.1-mini");
-        var response = service.answer("Why did requests fail?", "timeout", 30);
+        ChatService ai = new ChatService(mapper, "", "gpt-4.1-mini");
+        LogAnalysisGraph graph = new LogAnalysisGraph(splunk, ai, mapper);
+        var response = graph.run("Why did requests fail?", "timeout", 30);
         assertEquals(3, response.eventCount());
         assertTrue(response.answer().contains("timeout"));
     }
