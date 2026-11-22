@@ -1,0 +1,43 @@
+name: Build and smoke test Spring Boot chatbot
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Compile and test
+        run: mvn -B clean verify
+      - name: Start Spring Boot with mock Splunk and AI
+        run: |
+          SPLUNK_MOCK=true OPENAI_API_KEY= java -jar target/splunk-ai-search-1.0.0.jar > spring.log 2>&1 &
+          echo $! > spring.pid
+          for i in $(seq 1 40); do
+            if curl -fsS http://localhost:8080/ >/dev/null; then exit 0; fi
+            sleep 2
+          done
+          cat spring.log
+          exit 1
+      - name: Verify UI, OpenAPI, Splunk and chat endpoints
+        run: |
+          curl -fsS http://localhost:8080/ | grep -q 'Splunk AI Chatbot'
+          curl -fsS http://localhost:8080/v3/api-docs | grep -q '/api/chat'
+          curl -fsS 'http://localhost:8080/api/logs?q=timeout&minutes=30' | grep -q 'HikariPool'
+          curl -fsS -H 'Content-Type: application/json' -d '{"message":"Why did requests fail?","searchText":"timeout","minutes":30}' http://localhost:8080/api/chat | grep -q 'eventCount'
+      - name: Print Spring Boot logs on failure
+        if: failure()
+        run: cat spring.log || true
+      - name: Stop application
+        if: always()
+        run: |
+          if [ -f spring.pid ]; then kill $(cat spring.pid) || true; fi
