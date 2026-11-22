@@ -5,3 +5,7 @@ splunk:
   token: ${SPLUNK_TOKEN:}
   index: ${SPLUNK_INDEX:*}
   mock: ${SPLUNK_MOCK:true}
+
+openai:
+  api-key: ${OPENAI_API_KEY:}
+  model: ${OPENAI_MODEL:gpt-4.1-mini}
