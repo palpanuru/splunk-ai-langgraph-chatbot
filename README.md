@@ -12,6 +12,12 @@ docker compose up --build
 
 Open http://localhost:8000. Default `SPLUNK_MOCK=true` and `MOCK_AI=true` run without credentials. To connect Splunk, configure `SPLUNK_MOCK=false`, `SPLUNK_URL`, `SPLUNK_TOKEN`. To enable AI, set `MOCK_AI=false` and `OPENAI_API_KEY`.
 
+## Swagger UI (Spring Boot)
+
+After starting the services, open http://localhost:8080/swagger-ui/index.html (not port 8000). The OpenAPI JSON is at http://localhost:8080/v3/api-docs.
+
+If upgrading an existing Docker deployment, run `docker compose up --build -d` so the Springdoc dependency is included. The Python FastAPI API docs are at http://localhost:8000/docs.
+
 ## APIs
 
 ```bash
