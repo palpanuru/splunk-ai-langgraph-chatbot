@@ -1,22 +1,12 @@
 services:
-  splunk-api:
+  splunk-ai:
     build: .
+    ports:
+      - "8080:8080"
     environment:
       SPLUNK_MOCK: ${SPLUNK_MOCK:-true}
       SPLUNK_URL: ${SPLUNK_URL:-https://localhost:8089}
       SPLUNK_TOKEN: ${SPLUNK_TOKEN:-}
       SPLUNK_INDEX: ${SPLUNK_INDEX:-*}
-    ports:
-      - "8080:8080"
-  chatbot:
-    build: ./graph-service
-    depends_on:
-      - splunk-api
-    environment:
-      JAVA_API_URL: http://splunk-api:8080
-      MOCK_AI: ${MOCK_AI:-true}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4.1-mini}
-      CHAT_API_KEY: ${CHAT_API_KEY:-}
-    ports:
-      - "8000:8000"
